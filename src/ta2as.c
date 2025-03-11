@@ -17,7 +17,7 @@
 #include <ctype.h>
 #include <stdlib.h>
 #include <string.h>
-
+#include <assert.h>
 typedef void (*modfunc)(AsmLine *ln);
 
 typedef struct {
@@ -178,9 +178,10 @@ static int checkWordsModify(AsmLine *const ln) {
 
 /** If given operand is a register in Intel syntax, returns the register size.
  */
-static int cpuRegisterSize(const ChBuf op) {
+static int cpuRegisterSize(const char * const op) {
     ChBuf buf;
     const size_t len = strcspn(op, " \t");
+    assert(len <= LINE_MAX_LENGTH);
     strncpy(buf, op, len);
     buf[len]                 = '\0';
     const RegStruct *const p = (RegStruct *) bsearch(strlwr(buf), regslist, REGSLIST_LEN, sizeof(RegStruct),
