@@ -56,7 +56,7 @@ const RegStruct regslist[] = {
         {"edx", 4}, {"esi", 4}, {"esp", 4}, {"si", 2},  {"sp", 2},  {"tr6", 4}, // Test register
         {"tr7", 4}                                                              // Test register
 };
-#define REGSLIST_LEN (sizeof(regslist) / sizeof(regslist[0]))
+const size_t REGSLIST_LEN = sizeof(regslist) / sizeof(regslist[0]);
 
 int operandDataTypeSize(const char **op);
 void eqSgnReshuffle(AsmLine *ln);
@@ -73,7 +73,7 @@ const ModStruct wrdmods[] = {
         {"model", NULL, 0},       {"p386", NULL, 0},
         {"stack", NULL, 0},       {"textequ", textequReshuffle, 1},
 };
-#define WORD_MODS_LEN (sizeof(wrdmods) / sizeof(wrdmods[0]))
+const size_t WORD_MODS_LEN = sizeof(wrdmods) / sizeof(wrdmods[0]);
 
 /** List of pairs, to replace specific words.
  *  Must be sorted in order to make bsearch() work.
@@ -90,11 +90,11 @@ const ReplaceStruct wrdreplace[] = {
         {"movsx", "movs"},    {"movzx", "movz"},  {"outsd", "outsl"}, {"public", ".globl"},
         {"scasd", "scasl"},   {"stosd", "stosl"},
 };
-#define WORD_REPLACE_LEN (sizeof(wrdreplace) / sizeof(wrdreplace[0]))
+const size_t WORD_REPLACE_LEN = sizeof(wrdreplace) / sizeof(wrdreplace[0]);
 
 /** For strings in form "LABEL = NUMBER".
  */
-void eqSgnReshuffle(AsmLine *ln) {
+void eqSgnReshuffle(AsmLine *const ln) {
     const char *opg;
     int idx;
     idx = 0;
@@ -112,13 +112,13 @@ void eqSgnReshuffle(AsmLine *ln) {
     }
 }
 
-void equReshuffle(AsmLine *ln) {
+void equReshuffle(AsmLine *const ln) {
     strcpy(ln->com, ln->label);
     strcat(ln->com, ",");
     strcpy(ln->label, ".equ");
 }
 
-void textequReshuffle(AsmLine *ln) {
+void textequReshuffle(AsmLine *const ln) {
     strcpy(ln->com, ln->label);
     strcat(ln->com, ",");
     strcpy(ln->label, ".textequ");
@@ -126,14 +126,16 @@ void textequReshuffle(AsmLine *ln) {
 
 /** Uses wrdreplace[] array to replace Intel syntax words with AT&T replacements.
  */
-int checkWordsReplace(AsmLine *ln) {
+static int checkWordsReplace(AsmLine *const ln) {
     ReplaceStruct *p;
-    p = (ReplaceStruct *) bsearch(ln->com, wrdreplace, WORD_REPLACE_LEN, sizeof(ReplaceStruct), (void *) strcasecmp);
-    if (p != NULL) {
+    p = (ReplaceStruct *) bsearch(ln->com, wrdreplace, WORD_REPLACE_LEN, sizeof(ReplaceStruct),
+                                  (int (*)(const void *, const void *)) strcasecmp);
+    if (p != nullptr) {
         strcpy(ln->com, p->dst);
         return 0;
     }
-    p = (ReplaceStruct *) bsearch(ln->label, wrdreplace, WORD_REPLACE_LEN, sizeof(ReplaceStruct), (void *) strcasecmp);
+    p = (ReplaceStruct *) bsearch(ln->label, wrdreplace, WORD_REPLACE_LEN, sizeof(ReplaceStruct),
+                                  (int (*)(const void *, const void *)) strcasecmp);
     if (p != NULL) {
         strcpy(ln->label, p->dst);
         return 1;
@@ -144,18 +146,20 @@ int checkWordsReplace(AsmLine *ln) {
 /** Uses wrdmods[] array to make advanced replacements of Intel syntax words.
  *  For every matching line, a function is called to adjust it to AT&T syntax.
  */
-int checkWordsModify(AsmLine *ln) {
+static int checkWordsModify(AsmLine *const ln) {
     ModStruct *p;
     int waslabel;
     waslabel = -1;
     p        = NULL;
     if (p == NULL) {
-        p = (ModStruct *) bsearch(ln->com, wrdmods, WORD_MODS_LEN, sizeof(ModStruct), (void *) strcasecmp);
+        p = (ModStruct *) bsearch(ln->com, wrdmods, WORD_MODS_LEN, sizeof(ModStruct),
+                                  (int (*)(const void *, const void *)) strcasecmp);
         if (p != NULL)
             waslabel = 0;
     }
     if (p == NULL) {
-        p = (ModStruct *) bsearch(ln->label, wrdmods, WORD_MODS_LEN, sizeof(ModStruct), (void *) strcasecmp);
+        p = (ModStruct *) bsearch(ln->label, wrdmods, WORD_MODS_LEN, sizeof(ModStruct),
+                                  (int (*)(const void *, const void *)) strcasecmp);
         if (p != NULL)
             waslabel = 1;
     }
@@ -174,22 +178,22 @@ int checkWordsModify(AsmLine *ln) {
 
 /** If given operand is a register in Intel syntax, returns the register size.
  */
-int cpuRegisterSize(const ChBuf op) {
-    RegStruct *p;
+static int cpuRegisterSize(const ChBuf op) {
     ChBuf buf;
-    int len;
-    len = strcspn(op, " \t");
+    const size_t len = strcspn(op, " \t");
     strncpy(buf, op, len);
-    buf[len] = '\0';
-    p        = (RegStruct *) bsearch(strlwr(buf), regslist, REGSLIST_LEN, sizeof(RegStruct), (void *) strcmp);
-    if (p != NULL)
+    buf[len]                 = '\0';
+    const RegStruct *const p = (RegStruct *) bsearch(strlwr(buf), regslist, REGSLIST_LEN, sizeof(RegStruct),
+                                                     (int (*)(const void *, const void *)) strcasecmp);
+    if (p != nullptr) {
         return p->size;
+    }
     return 0;
 }
 
 /** Returns if given command is a data definition.
  */
-int isDataDefinition(const ChBuf com) {
+static int isDataDefinition(const ChBuf com) {
     if (strcasecmp(com, ".byte") == 0)
         return 1;
     if (strcasecmp(com, ".short") == 0)
@@ -207,7 +211,7 @@ int isDataDefinition(const ChBuf com) {
 
 /** Returns if given command is an IO instruction.
  */
-int isIOInstruction(const ChBuf com) {
+static int isIOInstruction(const ChBuf com) {
     if (strcasecmp(com, "out") == 0)
         return 1;
     if (strcasecmp(com, "in") == 0)
@@ -217,29 +221,35 @@ int isIOInstruction(const ChBuf com) {
 
 /** Returns if given command is a jump instruction.
  */
-int isJumpInstruction(const ChBuf com) {
-    if ((com[0] == 'j') || (com[0] == 'J'))
+static int isJumpInstruction(const ChBuf com) {
+    if ((com[0] == 'j') || (com[0] == 'J')) {
         return 1;
+    }
     return 0;
 }
 
-void strTrimLeft(ChBuf op) {
-    int len = strlen(op);
-    int skip;
-    for (skip = 0; op[skip] != '\0'; skip++) {
+#if 0 /* Not used */
+static void strTrimLeft(ChBuf op) {
+    const size_t len = strlen(op);
+    size_t skip;
+    for (skip = 0U; op[skip] != '\0'; ++skip) {
         if ((op[skip] != ' ') && (op[skip] != '\t'))
             break;
     }
-    if (skip > 0) {
-        memmove(op, op + skip, len + 1 - skip);
+    if (skip > 0U) {
+        memmove(op, op + skip, len + 1U - skip);
     }
 }
+#endif
 
-void strTrimRight(ChBuf op) {
-    int len = strlen(op) - 1;
-    while ((op[len] == ' ') || (op[len] == '\t')) {
+static void strTrimRight(ChBuf op) {
+    size_t len = strlen(op);
+    if (len > 0U) {
+        --len;
+    }
+    while (((op[len] == ' ') || (op[len] == '\t')) && (len > 0U)) {
         op[len] = '\0';
-        len--;
+        --len;
     }
 }
 
@@ -253,9 +263,9 @@ int operandDataTypeSize(const char **op) {
             {"dword\0", 4},
             {"qword\0", 8},
     };
-    int idx, len;
-    for (idx = 0; idx < sizeof(varkindlist) / sizeof(varkindlist[0]); idx++) {
-        len = strlen(varkindlist[idx].name);
+
+    for (size_t idx = 0U; idx < sizeof(varkindlist) / sizeof(varkindlist[0]); ++idx) {
+        const size_t len = strlen(varkindlist[idx].name);
         if (strncasecmp((*op), varkindlist[idx].name, len) == 0) {
             if (isspace((*op)[len])) {
                 (*op) += len;
@@ -266,7 +276,7 @@ int operandDataTypeSize(const char **op) {
     return 0;
 }
 
-int parseOperandDataType(const char **op, MemoryAddress *maddr) {
+static int parseOperandDataType(const char **op, MemoryAddress *const maddr) {
     int len;
     len = operandDataTypeSize(op);
     switch (len) {
@@ -297,8 +307,7 @@ int parseOperandDataType(const char **op, MemoryAddress *maddr) {
  *   DISP is constant offset, BASE is register, INDEX is register
  *    and SCALE is constant number.
  */
-int chopIntelMemoryAddress(const Operand *op, MemoryAddress *maddr) {
-    int len;
+static int chopIntelMemoryAddress(const Operand *const op, MemoryAddress *const maddr) {
     ChBuf wrd;
     char last_opertr[2];
     char *mul_pos;
@@ -320,10 +329,10 @@ int chopIntelMemoryAddress(const Operand *op, MemoryAddress *maddr) {
             opg += strspn(opg, " \t");
         }
     }
-    len = strcspn(opg, "[");
+    const size_t len = strcspn(opg, "[");
     strncpy(wrd, opg, len);
     wrd[len] = '\0';
-    if (len > 0) {
+    if (len > 0U) {
         while ((mul_pos = strchr(wrd, '(')) != NULL)
             memmove(mul_pos, mul_pos + 1, strlen(mul_pos));
         while ((mul_pos = strchr(wrd, ')')) != NULL)
@@ -339,9 +348,9 @@ int chopIntelMemoryAddress(const Operand *op, MemoryAddress *maddr) {
         // Get rid of white chars
         opg += strspn(opg, " \t");
         // find an argument of +/- operation and make a separate string out of it
-        len = strcspn(opg, "+-]");
-        strncpy(wrd, opg, len);
-        wrd[len] = '\0';
+        const size_t len_1 = strcspn(opg, "+-]");
+        strncpy(wrd, opg, len_1);
+        wrd[len_1] = '\0';
         // check if the operand is multiplication of two
         mul_pos = strchr(wrd, '*');
         if (mul_pos != NULL) {
@@ -357,7 +366,7 @@ int chopIntelMemoryAddress(const Operand *op, MemoryAddress *maddr) {
                 strcpy(maddr->scale, wrd);
             } else {
                 strcat(maddr->disp, last_opertr);
-                strncat(maddr->disp, opg, len);
+                strncat(maddr->disp, opg, len_1);
             }
         } else {
             // if it is single, analyze it as base, or offset with multiplier=1
@@ -375,11 +384,11 @@ int chopIntelMemoryAddress(const Operand *op, MemoryAddress *maddr) {
             }
         }
         // if the addressing bracket closes, finish
-        if (opg[len] == ']')
+        if (opg[len_1] == ']')
             break;
         // else store the +/- operation for next iteration
-        last_opertr[0] = opg[len];
-        opg += len + 1;
+        last_opertr[0] = opg[len_1];
+        opg += len_1 + 1U;
     } while (1);
     return 1;
 }
@@ -387,7 +396,7 @@ int chopIntelMemoryAddress(const Operand *op, MemoryAddress *maddr) {
 /** Converts memory address data into operand string with AT&T syntax.
  *  General output syntax: "DISP(BASE,INDEX,SCALE)", ie "mem_location(%ebx,%ecx,4)".
  */
-int linkAtntMemoryAddress(Operand *op, const MemoryAddress *maddr) {
+static int linkAtntMemoryAddress(Operand *op, const MemoryAddress *const maddr) {
     char *opg;
     opg  = op->txt;
     *opg = 0;
@@ -412,12 +421,12 @@ int linkAtntMemoryAddress(Operand *op, const MemoryAddress *maddr) {
 
 /** Converts hex and bin values inside operand from Intel to AT&T syntax.
  */
-void operandHexBinValues2Atnt(Operand *op) {
-    int len, num_len;
+static void operandHexBinValues2Atnt(Operand *op) {
+    size_t len;
     char *opg;
     opg = op->txt;
     while (len = strcspn(opg, "0123456789"), opg += len, isdigit(*opg)) {
-        num_len = strspn(opg, "0123456789abcdefABCDEF");
+        size_t num_len = strspn(opg, "0123456789abcdefABCDEF");
         if ((len > 0) && (isalpha(*(opg - 1)) || *(opg - 1) == '@' || *(opg - 1) == '_')) {
         } else {
             char ch;
@@ -440,7 +449,7 @@ void operandHexBinValues2Atnt(Operand *op) {
 
 /** Converts a single instruction operand from Intel to AT&T syntax.
  */
-int operandChange2Atnt(Operand *op, short com_flags) {
+static int operandChange2Atnt(Operand *const op, const short com_flags) {
     char *temp, *opg;
     int len;
     opg = op->txt;
@@ -507,8 +516,8 @@ int operandChange2Atnt(Operand *op, short com_flags) {
 /** Parses an assembly line in Intel syntax.
  *  Divides it into label, assembler command with operands, and remark.
  */
-int chopIntelAssemblyLine(const ChBuf iline, AsmLine *ln) {
-    int len, op_idx;
+int chopIntelAssemblyLine(const ChBuf iline, AsmLine *const ln) {
+    size_t len, op_idx;
     op_idx = 0;
     if (!isspace(iline[0])) { // starts with no spaces - label or variable definition
         if (*iline == ';')
@@ -545,53 +554,56 @@ int chopIntelAssemblyLine(const ChBuf iline, AsmLine *ln) {
         strcpy(ln->rem, iline);
         ln->rem[0] = '#';
     }
-        ln->op_len = op_idx;
+        ln->op_len = (ssize_t)op_idx;
     return 1;
 }
 
 /** Converts chopped assembly line from Intel syntax into AT&T one.
  */
-void changeAssemblyLineToAtnt(AsmLine *ln, AsmCodeProps *props) {
+void changeAssemblyLineToAtnt(AsmLine *const ln, AsmCodeProps *const) {
     int waslabel;
-    int label_len;
-    int idx;
+
     waslabel = -1;
     { waslabel = checkWordsReplace(ln); }
     if (waslabel == -1) {
         waslabel = checkWordsModify(ln);
     }
     if (waslabel == 0) {
-        label_len = strlen(ln->label);
+        size_t label_len = strlen(ln->label);
         if ((label_len > 0) && (ln->label[label_len - 1] != ':')) {
             ln->label[label_len++] = ':';
             ln->label[label_len]   = '\0';
         }
     }
     // set flags determining what the instruction is
-    if (isDataDefinition(ln->com))
+    if (isDataDefinition(ln->com)) {
         ln->com_flags |= Com_DataDef;
-    if (isIOInstruction(ln->com))
+    }
+    if (isIOInstruction(ln->com)) {
         ln->com_flags |= Com_IOInstr;
-    if (isJumpInstruction(ln->com))
+    }
+    if (isJumpInstruction(ln->com)) {
         ln->com_flags |= Com_JmpInstr;
-    if (ln->op_len > 1)
+    }
+    if (ln->op_len > 1) {
         ln->com_flags |= Com_ManyOperands;
-    for (idx = 0; idx < ln->op_len; idx++) {
+    }
+    for (int idx = 0; idx < ln->op_len; ++idx) {
         operandChange2Atnt(&ln->op[idx], ln->com_flags);
     }
 }
 
 /** Links the assembly line described in AsmLine into a single string.
  */
-void linkAtntAssemblyLine(const AsmLine *ln, ChBuf oline) {
-    int idx;
+void linkAtntAssemblyLine(const AsmLine *const ln, ChBuf oline) {
+
     int sizesuf = 0;
     oline[0]    = '\0';
     if ((ln->label[0] != '\0') || (ln->com[0] != '\0')) {
         strcat(oline, ln->label);
         strcat(oline, "\t");
         sizesuf = 0;
-        for (idx = 0; idx < ln->op_len; idx++) {
+        for (ssize_t idx = 0; idx < ln->op_len; ++idx) {
             sizesuf |= ln->op[idx].flags;
         }
         if ((ln->com_flags & Com_IOInstr) && (sizesuf != Op_SizeWord))
@@ -608,13 +620,13 @@ void linkAtntAssemblyLine(const AsmLine *ln, ChBuf oline) {
         strcat(oline, "\t");
         // Add operands - order depends on whether it's data definition or not
         if (ln->com_flags & Com_DataDef) {
-            for (idx = 0; idx < ln->op_len;) {
+            for (ssize_t idx = 0; idx < ln->op_len;) {
                 strcat(oline, ln->op[idx++].txt);
                 if (idx < ln->op_len)
                     strcat(oline, ",");
             }
         } else {
-            for (idx = ln->op_len - 1; idx >= 0;) {
+            for (ssize_t idx = ln->op_len - 1; idx >= 0;) {
                 strcat(oline, ln->op[idx--].txt);
                 if (idx >= 0)
                     strcat(oline, ",");
@@ -631,8 +643,7 @@ void linkAtntAssemblyLine(const AsmLine *ln, ChBuf oline) {
 /** Changes the assembly line into format for embedding into c/cpp files.
  */
 void makeAssemblyLineCCEmbeded(ChBuf line) {
-    int idx;
-    for (idx = 0; idx < strlen(line); idx++) {
+    for (size_t idx = 0U; idx < strlen(line); idx++) {
         // change '%' into '%%' and '\' into '\\'
         if ((line[idx] == '%') || (line[idx] == '\\')) {
             memmove(line + idx + 1, line + idx, strlen(line + idx) + 1);

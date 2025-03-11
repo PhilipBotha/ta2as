@@ -23,7 +23,7 @@ struct CmdOptions {
     int cc_embeded;
 };
 
-int getCommandOptions(struct CmdOptions *opt, int argc, char *argv[]) {
+static int getCommandOptions(struct CmdOptions *opt, int argc, char *argv[]) {
     if (argc != 3) {
         puts("Converts Tasm intel assembler to AT&T syntax (GNU As)\n\r"
              "Usage: Ta2As <inputfile> <outputfile>\n\n\r");
@@ -37,8 +37,6 @@ int getCommandOptions(struct CmdOptions *opt, int argc, char *argv[]) {
 
 int main(int argc, char *argv[]) {
     static struct CmdOptions opt;
-    FILE *in, *out;
-    int line_len;
     static ChBuf line_buf;
     static AsmLine ln;
     static AsmCodeProps props;
@@ -47,12 +45,12 @@ int main(int argc, char *argv[]) {
     if (getCommandOptions(&opt, argc, argv) != 0)
         return 1;
     // Open files
-    in = fopen(opt.in_fname, "r");
+    FILE* const in = fopen(opt.in_fname, "r");
     if (!in) {
         puts("Couldn't open input file\n\r");
         return 1;
     }
-    out = fopen(opt.out_fname, "w");
+    FILE* const out = fopen(opt.out_fname, "w");
     if (!out) {
         fclose(in);
         puts("Couldn't open output file\n\r");
@@ -64,7 +62,7 @@ int main(int argc, char *argv[]) {
     while (fgets(line_buf, LINE_MAX_LENGTH, in)) {
         // Initialize variables
         memset(&ln, 0, sizeof(AsmLine));
-        line_len = strlen(line_buf);
+        const size_t line_len = strlen(line_buf);
         // Get rid of the EOL character
         if (line_len > 0)
             line_buf[line_len - 1] = '\0';

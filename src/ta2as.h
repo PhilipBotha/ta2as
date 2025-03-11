@@ -14,9 +14,10 @@
  *     See legal.txt for complete text of the license.
  */
 #define PROG_VERSION "0.8.2"
-#define LINE_MAX_OPERANDS 32
-#define LINE_MAX_LENGTH 255
+#define LINE_MAX_OPERANDS (32)
+#define LINE_MAX_LENGTH (255)
 
+#include <stddef.h>
 typedef char ChBuf[LINE_MAX_LENGTH + 1];
 
 enum OpFlags {
@@ -49,12 +50,13 @@ typedef struct {
     short com_flags;
     ChBuf rem;
     Operand op[LINE_MAX_OPERANDS];
-    int op_len;
+    ssize_t op_len;
 } AsmLine;
 
 /** Information required for conversion which applies to the whole file. */
 typedef struct {
     //TODO: Make a buffer here to store all labels in the input file.
+    int dummy;
 } AsmCodeProps;
 
 int chopIntelAssemblyLine(const ChBuf iline, AsmLine *ln);
