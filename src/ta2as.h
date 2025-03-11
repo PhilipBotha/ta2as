@@ -17,21 +17,21 @@
 #define LINE_MAX_OPERANDS 32
 #define LINE_MAX_LENGTH 255
 
-typedef char ChBuf[LINE_MAX_LENGTH+1];
+typedef char ChBuf[LINE_MAX_LENGTH + 1];
 
 enum OpFlags {
-    Op_SizeByte   = 0x01,
-    Op_SizeWord   = 0x02,
-    Op_SizeDWord  = 0x04,
-    Op_SizeQWord  = 0x08,
-    Op_SizeOWord  = 0x10,
+    Op_SizeByte  = 0x01,
+    Op_SizeWord  = 0x02,
+    Op_SizeDWord = 0x04,
+    Op_SizeQWord = 0x08,
+    Op_SizeOWord = 0x10,
 };
-#define Op_SizeMask (Op_SizeByte|Op_SizeWord|Op_SizeDWord|Op_SizeQWord|Op_SizeOWord)
+#define Op_SizeMask (Op_SizeByte | Op_SizeWord | Op_SizeDWord | Op_SizeQWord | Op_SizeOWord)
 
 /** Single operand in an assembly line. */
 typedef struct {
-	ChBuf txt;
-	short flags;
+    ChBuf txt;
+    short flags;
 } Operand;
 
 enum ComFlags {
@@ -54,12 +54,12 @@ typedef struct {
 
 /** Information required for conversion which applies to the whole file. */
 typedef struct {
-  //TODO: Make a buffer here to store all labels in the input file.
+    //TODO: Make a buffer here to store all labels in the input file.
 } AsmCodeProps;
 
-int chopIntelAssemblyLine(const ChBuf iline,AsmLine *ln);
+int chopIntelAssemblyLine(const ChBuf iline, AsmLine *ln);
 
-void changeAssemblyLineToAtnt(AsmLine *ln,AsmCodeProps *props);
+void changeAssemblyLineToAtnt(AsmLine *ln, AsmCodeProps *props);
 
-void linkAtntAssemblyLine(const AsmLine *ln,ChBuf oline);
+void linkAtntAssemblyLine(const AsmLine *ln, ChBuf oline);
 void makeAssemblyLineCCEmbeded(ChBuf line);

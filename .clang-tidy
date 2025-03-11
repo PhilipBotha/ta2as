@@ -1,0 +1,20 @@
+Checks: 'cppcoreguidelines-*,
+performance-*,
+modernize-*,
+google-*,
+misc-*
+cert-*,
+readability-*,
+clang-analyzer-*
+bugprone-*
+concurrency-*
+portability-*
+'
+
+
+WarningsAsErrors: ''
+AnalyzeTemporaryDtors: false
+FormatStyle:     none
+
+
+
